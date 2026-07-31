@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk 'NR<=3462 && /@media/ {line=NR; rule=$0} END {print line\": \"rule}' \"/c/Users/visva/Downloads/360 kalam \\(2\\)/360 kalam/src/styles.css\")",
+      "Bash(PORT=5174 node server.js)"
+    ]
+  }
+}
