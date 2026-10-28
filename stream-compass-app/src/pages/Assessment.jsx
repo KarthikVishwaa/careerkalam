@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api, ApiError } from '../api.js';
 import { navigate, ASSESSMENT_ID_KEY } from '../App.jsx';
+import LoadingMessages from '../components/LoadingMessages.jsx';
 
 export default function Assessment() {
   const assessmentId = localStorage.getItem(ASSESSMENT_ID_KEY);
@@ -11,6 +12,7 @@ export default function Assessment() {
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
   useEffect(() => {
     if (!assessmentId) {
@@ -55,10 +57,14 @@ export default function Assessment() {
   );
   const allAnswered = questions.length > 0 && answeredCount === questions.length;
 
+  // Tapping an option is the only way forward (no separate "Next" button) — it
+  // saves and auto-advances. Disabled while a save is in flight so a quick
+  // double-tap can't fire two overlapping saves for the same question.
   async function choose(optionId) {
-    if (!current) return;
+    if (!current || saving) return;
     setSelections((s) => ({ ...s, [current.id]: optionId }));
     setSaving(true);
+    setNotice('');
     try {
       await api.saveResponse(assessmentId, current.id, optionId);
     } catch {
@@ -74,7 +80,19 @@ export default function Assessment() {
     }
   }
 
-  async function handleSubmit() {
+  // Always-available "Submit" (replaces a separate "Next" button). If anything's
+  // still unanswered, it jumps straight to the first gap instead of just sitting
+  // there disabled — only actually submits once everything's filled in.
+  async function handleSubmitClick() {
+    if (!allAnswered) {
+      const firstUnanswered = questions.findIndex((q) => !selections[q.id]);
+      if (firstUnanswered !== -1) {
+        setIndex(firstUnanswered);
+        setNotice(`Question ${questions[firstUnanswered].number} still needs an answer.`);
+      }
+      return;
+    }
+
     setSubmitting(true);
     setError('');
     try {
@@ -93,6 +111,10 @@ export default function Assessment() {
         <p className="sc-lede">Loading your assessment…</p>
       </div>
     );
+  }
+
+  if (submitting) {
+    return <LoadingMessages label="Submitting your answers…" />;
   }
 
   if (error && questions.length === 0) {
@@ -127,6 +149,7 @@ export default function Assessment() {
             type="button"
             className={`sc-option${selections[current.id] === opt.id ? ' is-selected' : ''}`}
             onClick={() => choose(opt.id)}
+            disabled={saving}
           >
             <span className="sc-option-letter">{opt.letter}</span>
             {opt.text}
@@ -134,6 +157,7 @@ export default function Assessment() {
         ))}
       </div>
 
+      {notice && <p className="sc-notice">{notice}</p>}
       {error && <p className="sc-error">{error}</p>}
 
       <div className="sc-nav-row">
@@ -146,27 +170,10 @@ export default function Assessment() {
           Back
         </button>
 
-        {index < questions.length - 1 ? (
-          <button
-            type="button"
-            className="sc-btn"
-            onClick={() => setIndex((i) => Math.min(questions.length - 1, i + 1))}
-            disabled={!selections[current.id]}
-          >
-            Next
-          </button>
-        ) : (
-          <button type="button" className="sc-btn" onClick={handleSubmit} disabled={!allAnswered || submitting}>
-            {submitting ? 'Submitting…' : 'Submit & see results'}
-          </button>
-        )}
+        <button type="button" className="sc-btn" onClick={handleSubmitClick}>
+          {allAnswered ? 'Submit & see results' : 'Submit'}
+        </button>
       </div>
-
-      {index === questions.length - 1 && !allAnswered && (
-        <p className="sc-lede" style={{ marginTop: 12, fontSize: 13 }}>
-          {questions.length - answeredCount} question(s) still need an answer before you can submit.
-        </p>
-      )}
     </div>
   );
 }

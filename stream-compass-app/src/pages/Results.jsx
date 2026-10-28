@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import { api, ApiError } from '../api.js';
 import { navigate, ASSESSMENT_ID_KEY } from '../App.jsx';
+import LoadingMessages from '../components/LoadingMessages.jsx';
 
 const STREAM_LABELS = { PCM: 'PCM', PCB: 'PCB', Commerce: 'Commerce', Humanities: 'Humanities' };
 
@@ -75,12 +76,7 @@ export default function Results() {
   }, [assessmentId]);
 
   if (loading) {
-    return (
-      <div className="sc-center">
-        <div className="sc-spinner" />
-        <p className="sc-lede">Scoring your results…</p>
-      </div>
-    );
+    return <LoadingMessages label="Scoring your results…" />;
   }
 
   if (error) {
@@ -97,12 +93,30 @@ export default function Results() {
     score
   }));
 
+  // Browser print-to-PDF rather than a server-rendered PDF — zero new backend
+  // dependency, and the print stylesheet (see styles.css @media print) already
+  // hides everything but the result cards, so "Print" and "Save as PDF" are the
+  // same action from the browser's own dialog. The title becomes the suggested
+  // save filename in most browsers.
+  function downloadAsPdf() {
+    const original = document.title;
+    const slug = (student.name || 'student').trim().replace(/\s+/g, '-');
+    document.title = `Stream-Selection-Result-${slug}`;
+    window.print();
+    setTimeout(() => {
+      document.title = original;
+    }, 500);
+  }
+
   return (
     <div>
       <div className="sc-card" style={{ marginBottom: 16 }}>
         <span className="sc-badge">Results{student.name ? ` for ${student.name}` : ''}</span>
         <h1 className="sc-title">{result.headline}</h1>
         <p className="sc-lede">{result.action}</p>
+        <button type="button" className="sc-btn sc-btn-secondary sc-no-print" onClick={downloadAsPdf}>
+          Download result as PDF
+        </button>
       </div>
 
       <div className="sc-card" style={{ marginBottom: 16 }}>

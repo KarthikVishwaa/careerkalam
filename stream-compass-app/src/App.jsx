@@ -30,6 +30,7 @@ function useHashRoute() {
 export default function App() {
   const hash = useHashRoute();
   const path = hash.replace(/^#/, '') || '/';
+  const isAdmin = path.startsWith('/admin');
 
   let page;
   if (path.startsWith('/admin/dashboard')) {
@@ -53,13 +54,23 @@ export default function App() {
   }
 
   return (
-    <div className="sc-shell">
-      <header className="sc-header">
-        <a href="https://careerkalam360.com" className="sc-wordmark">
-          CareerKalam360
-        </a>
-      </header>
-      {page}
-    </div>
+    <>
+      {!isAdmin && (
+        <>
+          <div className="sc-side-watermark sc-side-watermark-left sc-no-print" aria-hidden="true" />
+          <div className="sc-side-watermark sc-side-watermark-right sc-no-print" aria-hidden="true" />
+        </>
+      )}
+      <div className={isAdmin ? 'sc-admin-shell-root' : 'sc-shell'}>
+        {!isAdmin && (
+          <header className="sc-header sc-no-print">
+            <a href="https://careerkalam360.com" className="sc-wordmark">
+              CareerKalam360
+            </a>
+          </header>
+        )}
+        {page}
+      </div>
+    </>
   );
 }

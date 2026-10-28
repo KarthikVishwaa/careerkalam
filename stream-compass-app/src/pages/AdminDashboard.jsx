@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, ApiError, API_BASE } from '../api.js';
 import { navigate } from '../App.jsx';
+import AdminShell from '../components/AdminShell.jsx';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -10,13 +11,17 @@ function formatDate(iso) {
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState([]);
+  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api
-      .adminListPaid()
-      .then(({ students: list }) => {
+    Promise.all([
+      api.adminListPaid(),
+      fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' }).then((r) => (r.ok ? r.json() : null))
+    ])
+      .then(([{ students: list }, me]) => {
         setStudents(list);
+        if (me?.email) setEmail(me.email);
         setLoading(false);
       })
       .catch((err) => {
@@ -35,65 +40,60 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="sc-card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div>
-          <p className="sc-eyebrow">Stream Selection</p>
-          <h2 className="sc-title" style={{ margin: 0 }}>Paid students</h2>
-        </div>
-        <button type="button" className="sc-btn sc-btn-secondary" onClick={handleLogout}>
-          Sign out
-        </button>
-      </div>
+    <AdminShell email={email} onLogout={handleLogout}>
+      <div className="sc-card">
+        <p className="sc-eyebrow">Stream Selection</p>
+        <h2 className="sc-title" style={{ margin: '0 0 16px' }}>Paid students</h2>
 
-      {loading && (
-        <div className="sc-center">
-          <div className="sc-spinner" />
-        </div>
-      )}
+        {loading && (
+          <div className="sc-center">
+            <div className="sc-spinner" />
+          </div>
+        )}
 
-      {error && <p className="sc-error">{error}</p>}
+        {error && <p className="sc-error">{error}</p>}
 
-      {!loading && !error && students.length === 0 && <p className="sc-lede">No payments yet.</p>}
+        {!loading && !error && students.length === 0 && <p className="sc-lede">No payments yet.</p>}
 
-      {!loading && students.length > 0 && (
-        <div style={{ overflowX: 'auto' }}>
-          <table className="sc-table">
-            <thead>
-              <tr>
-                <th>Student</th>
-                <th>Contact</th>
-                <th>Grade / City</th>
-                <th>Paid</th>
-                <th>Status</th>
-                <th>Result</th>
-              </tr>
-            </thead>
-            <tbody>
-              {students.map((s) => (
-                <tr key={s.id}>
-                  <td>{s.studentName}</td>
-                  <td>
-                    {s.email}
-                    <br />
-                    {s.phone}
-                  </td>
-                  <td>
-                    {s.grade || '—'} / {s.city || '—'}
-                  </td>
-                  <td>
-                    ₹{(s.amountPaise / 100).toFixed(0)}
-                    <br />
-                    <span style={{ color: 'var(--muted)', fontSize: 12.5 }}>{formatDate(s.paidAt)}</span>
-                  </td>
-                  <td>{s.status}</td>
-                  <td>{s.primaryStreamCode || '—'}</td>
+        {!loading && students.length > 0 && (
+          <div style={{ overflowX: 'auto' }}>
+            <table className="sc-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Contact</th>
+                  <th>Grade / City</th>
+                  <th>Paid</th>
+                  <th>Status</th>
+                  <th>Result</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+              </thead>
+              <tbody>
+                {students.map((s) => (
+                  <tr key={s.id}>
+                    <td>{s.studentName}</td>
+                    <td>
+                      {s.email}
+                      <br />
+                      {s.phone}
+                    </td>
+                    <td>
+                      {s.grade || '—'} / {s.city || '—'}
+                    </td>
+                    <td>
+                      ₹{(s.amountPaise / 100).toFixed(0)}
+                      <br />
+                      <span style={{ color: 'var(--muted)', fontSize: 12.5 }}>{formatDate(s.paidAt)}</span>
+                    </td>
+                    <td>{s.status}</td>
+                    <td>{s.primaryStreamCode || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </AdminShell>
   );
 }
