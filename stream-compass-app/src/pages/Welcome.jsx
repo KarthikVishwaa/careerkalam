@@ -1,4 +1,5 @@
 import { navigate } from '../App.jsx';
+import { DISPLAY_PRICE } from '../api.js';
 
 export default function Welcome() {
   return (
@@ -18,7 +19,7 @@ export default function Welcome() {
       </ul>
 
       <div className="sc-price">
-        ₹299 <small>one-time, unlocks the full tool</small>
+        {DISPLAY_PRICE} <small>one-time, unlocks the full tool</small>
       </div>
 
       <button className="sc-btn sc-btn-block" style={{ marginTop: 18 }} onClick={() => navigate('#/details')}>

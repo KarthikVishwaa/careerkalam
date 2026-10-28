@@ -4,6 +4,11 @@
 // needed on the backend).
 export const API_BASE = 'https://careerkalam360-backend.onrender.com';
 
+// TEMPORARY TEST PRICE — must match PRICE_PAISE in the backend's
+// routes/streamCompass.js exactly (that's what actually gets charged; this is
+// display-only). Revert both to ₹299 before real launch.
+export const DISPLAY_PRICE = '₹1';
+
 class ApiError extends Error {
   constructor(message, { status, code } = {}) {
     super(message);

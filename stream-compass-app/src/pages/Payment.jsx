@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, ApiError } from '../api.js';
+import { api, ApiError, DISPLAY_PRICE } from '../api.js';
 import { navigate, ASSESSMENT_ID_KEY } from '../App.jsx';
 
 export default function Payment() {
@@ -91,13 +91,13 @@ export default function Payment() {
       </p>
 
       <div className="sc-price" style={{ marginBottom: 20 }}>
-        ₹299 <small>one-time</small>
+        {DISPLAY_PRICE} <small>one-time</small>
       </div>
 
       {error && <p className="sc-error">{error}</p>}
 
       <button className="sc-btn sc-btn-block" onClick={handlePay} disabled={paying}>
-        {paying ? 'Opening payment…' : 'Pay ₹299 & unlock'}
+        {paying ? 'Opening payment…' : `Pay ${DISPLAY_PRICE} & unlock`}
       </button>
     </div>
   );
